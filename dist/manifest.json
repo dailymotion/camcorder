@@ -1,0 +1,9 @@
+{
+  "name": "Dailymotion Camera",
+  "short_name": "Camera",
+  "icons": [],
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fff",
+  "theme_color": "#0066DC"
+}

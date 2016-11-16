@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dailymotion Camera</title>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <!-- PWA manifest -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="background-color" content="#ff">
+  <meta name="theme-color" content="#0066DC">
+<link href="main.css" rel="stylesheet"></head>
+<body>
+  <div class="view record-view">
+    <header class="record-view__header">
+      <h1 class="header__content header__title">Dailymotion Camera</h1>
+      <button id="showListBtn" class="header__button header__right" >List Records</button>
+    </header>
+    <main class="record-view__main">
+      <video muted></video>
+    </main>
+    <footer class="record-view__footer">
+      <span class="footer__content">
+        <button id="recordBtn" class="footer__button record-btn" disabled>🎥</button>
+      </span>
+    </footer>
+  </div>
+
+  <div class="view list-view hidden">
+    <header class="list-view__header">
+      <button id="listViewBackBtn" class="header__button header__left">Back</button>
+      <h1 class="header__content header__title">Recordings</h1>
+      <button id="loginBtn" class="header__button header__right">Login</button>
+      <button id="logoutBtn" class="header__button header__right hidden">Logout</button>
+    </header>
+    <main class="list-view__main">
+      <div class="list-view__list-container">
+        <ul>
+        </ul>
+      </div>
+    </main>
+  </div>
+
+  <div class="view watch-view hidden">
+    <header class="watch-view__header">
+      <button id="watchViewBackBtn" class="header__button header__left">Back</button>
+      <h1 class="header__content header__title">Watch Recording</h1>
+    </header>
+    <main class="watch-view__main">
+      <video loop></video>
+    </main>
+  </div>
+<script type="text/javascript" src="main.js"></script></body>
+</html>

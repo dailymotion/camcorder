@@ -1,0 +1,39 @@
+{
+  "name": "dailymotion-web-camera",
+  "version": "0.0.1",
+  "description": "Dailymotion Camera is a mobile application to record video & upload it to dailymotion directly from the browser, by using the getUserMedia and MediaRecorder APIs",
+  "author": "Olivier Audard <olivier.audard@dailymotion.com>",
+  "scripts": {
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean",
+    "build": "webpack",
+    "start": "webpack-dev-server -d",
+    "predeploy" : "npm run build --production",
+    "deploy": "git subtree push --prefix dist origin gh-pages",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "babel-core": "^6.18.2",
+    "babel-eslint": "^6.1.2",
+    "babel-loader": "^6.2.7",
+    "babel-preset-es2015": "^6.18.0",
+    "babel-preset-es2016": "^6.16.0",
+    "copy-webpack-plugin": "^4.0.1",
+    "css-loader": "^0.25.0",
+    "eslint": "^3.9.1",
+    "exports-loader": "^0.6.3",
+    "extract-text-webpack-plugin": "^1.0.1",
+    "html-webpack-plugin": "^2.24.1",
+    "imports-loader": "^0.6.5",
+    "node-sass": "^3.11.2",
+    "offline-plugin": "^3.4.2",
+    "sass-loader": "^4.0.2",
+    "style-loader": "^0.13.1",
+    "webpack": "^1.13.3",
+    "webpack-dev-server": "^1.16.2"
+  },
+  "dependencies": {
+    "localforage": "^1.4.3"
+  }
+}
