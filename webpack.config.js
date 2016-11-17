@@ -9,6 +9,14 @@ const sassLoaders = [
   'sass-loader?indentedSyntax=scss&includePaths[]=' + path.resolve(__dirname, './src')
 ]
 
+if (!process.env.DM_API_KEY) {
+  console.warn('⚠️  Dailymotion API key is missing! ⚠️')
+  console.log('\nYour app won\'t be able to login or upload videos to Dailymotion')
+  console.log('\t1. Create a Dailymotion API key at https://www.dailymotion.com/settings/developer')
+  console.log('\t2. Expose it as an environment variable : `export DM_API_KEY=<API key>`')
+  console.log('\n')
+}
+
 module.exports = {
   entry: path.resolve(__dirname, './src/scripts/index.js'),
   output: {

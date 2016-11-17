@@ -26,7 +26,9 @@ The goal is to showcase [`getUserMedia()`][2] & [`MediaRecorder`][3] APIs, and h
 
 1. Clone the repository
 2. Run `npm install` in the newly created folder.
-3. Run `npm start` to start the [webpack dev server][7]
+3. Create your own [Dailymotion API key][7]
+4. Make your newly created API key available as an environement variable : `export DM_API_KEY=<API key>`
+3. Run `npm start` to start the [webpack dev server][8]
 4. Open `http://localhost:8080/webpack-dev-server/` or `http://localhost:8080/` to test the application.
 
 ## NPM Scripts
@@ -53,4 +55,5 @@ Build the application for production and deploys it to github pages.
 [4]: https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API "[MDN] IndexedDB API"
 [5]: https://localforage.github.io/localForage/ "localForage"
 [6]: https://github.com/NekR/offline-plugin "offline-plugin"
-[7]: https://webpack.github.io/docs/webpack-dev-server.html "webpack dev server"
+[7]: https://www.dailymotion.com/settings/developer "Dailymotion - Manage your API Keys"
+[8]: https://webpack.github.io/docs/webpack-dev-server.html "webpack dev server"
