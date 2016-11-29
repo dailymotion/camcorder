@@ -59,6 +59,7 @@ module.exports = {
     }),
     new CopyWebpackPlugin([
       { from: 'src/manifest.json', to: 'manifest.json' },
+      { from: 'src/images/icons.svg', to: 'images/icons.svg' },
     ]),
     new ExtractTextPlugin('[name].css'),
     new HtmlWebpackPlugin({
