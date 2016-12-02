@@ -8,7 +8,7 @@
     "prebuild": "npm run clean",
     "build": "webpack",
     "start": "webpack-dev-server -d",
-    "predeploy" : "npm run build --production",
+    "predeploy": "npm run build --production",
     "deploy": "git subtree push --prefix dist origin gh-pages",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -34,6 +34,7 @@
     "webpack-dev-server": "^1.16.2"
   },
   "dependencies": {
+    "delegate": "^3.1.0",
     "localforage": "^1.4.3"
   }
 }

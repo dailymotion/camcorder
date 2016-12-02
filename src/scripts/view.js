@@ -1,3 +1,4 @@
+import delegate from 'delegate'
 
 export default class View {
   constructor(template) {
@@ -17,6 +18,7 @@ export default class View {
     this.listViewBackBtn  = document.getElementById('listViewBackBtn')
     this.loginBtn         = document.getElementById('loginBtn')
     this.logoutBtn        = document.getElementById('logoutBtn')
+    this.listViewList     = this.listView.querySelector('ul')
 
     // Watch View
     this.watchViewBackBtn = document.getElementById('watchViewBackBtn')
@@ -27,7 +29,7 @@ export default class View {
     this.recordView.classList.toggle('hidden', true)
     this.listView.classList.toggle('hidden', false)
     this.watchView.classList.toggle('hidden', true)
-    this.listView.querySelector('ul').innerHTML = this.template.itemList(items)
+    this.listViewList.innerHTML = this.template.itemList(items)
   }
 
   listViewBack() {
@@ -133,39 +135,29 @@ export default class View {
   }
 
   bindItemActions(handlers) {
-    this.listView.addEventListener('click', (e) => {
-      const { watchItem, removeItem, downloadItem, uploadItem } = handlers
-      const targetElement = e.target
-      const itemId = parseInt(targetElement.dataset.id || targetElement.parentElement.dataset.id, 10)
+    const { watchItem, removeItem, downloadItem, uploadItem } = handlers
+    const getItemIdFromDelegateTarget = (target) => parseInt(target.parentElement.dataset.id, 10)
 
-      if (targetElement.nodeName === 'LI' || targetElement.nodeName === 'LABEL') {
-        // Catch user action right away, so watchItem will be free to call play() on the video element asynchronously
-        this._catchUserAction(this.videoWatchElem)
-        watchItem(itemId)
-        return
-      }
-
-      if (targetElement.classList.contains('remove-btn')) {
-        removeItem(itemId)
-      }
-      else if (targetElement.classList.contains('download-btn')) {
-        downloadItem(itemId)
-      }
-      else if (targetElement.classList.contains('dailymotion-btn')) {
-        uploadItem(itemId)
-      }
+    delegate(this.listViewList, '.remove-btn', 'click', (e) => {
+      const itemId = getItemIdFromDelegateTarget(e.delegateTarget)
+      removeItem(itemId)
     })
-  }
 
-  bindWatchItem(handler) {
-    this.listView.addEventListener('click', (e) => {
-      const targetElement = e.target
-      if (targetElement.nodeName === 'LI' || targetElement.nodeName === 'LABEL') {
-        const itemId = targetElement.dataset.id || targetElement.parentElement.dataset.id
-        //
-        this._catchUserAction(this.videoWatchElem)
-        handler(parseInt(itemId, 10))
-      }
+    delegate(this.listViewList, '.download-btn', 'click', (e) => {
+      const itemId = getItemIdFromDelegateTarget(e.delegateTarget)
+      downloadItem(itemId)
+    })
+
+    delegate(this.listViewList, '.dailymotion-btn', 'click', (e) => {
+      const itemId = getItemIdFromDelegateTarget(e.delegateTarget)
+      uploadItem(itemId)
+    })
+
+    delegate(this.listViewList, 'label', 'click', (e) => {
+      const itemId = getItemIdFromDelegateTarget(e.delegateTarget)
+      // Catch user action right away, so watchItem will be free to call play() on the video element asynchronously
+      this._catchUserAction(this.videoWatchElem)
+      watchItem(itemId)
     })
   }
 
