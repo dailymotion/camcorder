@@ -686,7 +686,11 @@
 	  _createClass(Store, [{
 	    key: 'getRecordings',
 	    value: function getRecordings() {
-	      return _localforage2.default.getItem('recordings');
+	      return _localforage2.default.getItem('recordings').then(function (recordings) {
+	        return recordings || [];
+	      }).catch(function () {
+	        return [];
+	      });
 	    }
 	  }, {
 	    key: 'getRecording',
