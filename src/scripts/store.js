@@ -11,6 +11,8 @@ export default class Store {
 
   getRecordings() {
     return localforage.getItem('recordings')
+      .then((recordings) => recordings || [])
+      .catch(() => [])
   }
 
   getRecording(id) {
