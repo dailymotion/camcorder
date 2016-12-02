@@ -8,6 +8,13 @@ export default class Template {
     </a>`
   }
 
+  uploadButton() {
+    return `<button class="dailymotion-btn" title="Upload to Dailymotion">
+        <svg class="list__button__icon"><use xlink:href="images/icons.svg#dmp_ico-upload"></use></svg>
+        <span class="visuallyhidden">Upload</span>
+      </button>`
+  }
+
   itemList(items) {
     return items.reduce((a, item) => a + `
 <li class="list-view__list__item" data-id="${item.id}">
@@ -26,10 +33,7 @@ export default class Template {
   </button>
   ${item.dailymotion_id
     ? this.dailymotionLink(item.dailymotion_id)
-    : `<button class="dailymotion-btn" title="Upload to Dailymotion">
-        <svg class="list__button__icon"><use xlink:href="images/icons.svg#dmp_ico-upload"></use></svg>
-        <span class="visuallyhidden">Upload</span>
-      </button>`
+    : this.uploadButton()
   }
 </li>`, '')
   }

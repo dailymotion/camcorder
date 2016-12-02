@@ -10,11 +10,13 @@ const sassLoaders = [
 ]
 
 if (!process.env.DM_API_KEY) {
+  /* eslint-disable no-console */
   console.warn('⚠️  Dailymotion API key is missing! ⚠️')
   console.log('\nYour app won\'t be able to login or upload videos to Dailymotion')
   console.log('\t1. Create a Dailymotion API key at https://www.dailymotion.com/settings/developer')
   console.log('\t2. Expose it as an environment variable : `export DM_API_KEY=<API key>`')
   console.log('\n')
+  /* eslint-enable no-console */
 }
 
 module.exports = {
@@ -60,6 +62,7 @@ module.exports = {
     new CopyWebpackPlugin([
       { from: 'src/manifest.json', to: 'manifest.json' },
       { from: 'src/images/icons.svg', to: 'images/icons.svg' },
+      { from: 'src/images/logo-big.svg', to: 'images/logo-big.svg' },
     ]),
     new ExtractTextPlugin('[name].css'),
     new HtmlWebpackPlugin({

@@ -73,6 +73,18 @@ header {
   font-size: 20px;
   margin: 4px 0 0;
 }
+
+.header__title__icon {
+  height: 32px;
+  width: 160px;
+  margin-left: -16px;
+}
+
+.header__title__text {
+  line-height: 36px;
+  vertical-align: top;
+}
+
 .header__button {
   background-color: transparent;
   border-radius: 3px;
@@ -93,16 +105,16 @@ header {
 
   }
 }
-.header__left, 
+.header__left,
 .footer__left {
   margin-right: 15px;
 }
-.header__right, 
+.header__right,
 .footer__right {
   margin-left: 5px;
 }
 .header__button__icon {
-  fill: $headerColor; 
+  fill: $headerColor;
   height: 16px;
   width: 16px;
   .header__button:hover & {
@@ -110,7 +122,7 @@ header {
   }
 }
 
-.header__content, 
+.header__content,
 .footer__content {
   width: 100%;
 }
@@ -127,7 +139,7 @@ main {
 
 // Record View
 // ========================================================================
-.record-view__main, 
+.record-view__main,
 .watch-view__main {
   overflow: hidden;
   video {
@@ -207,6 +219,7 @@ main {
     width: 52px;
     line-height: 52px;
     padding: 2px;
+    padding-top: 6px;
     text-align: center;
     border: none;
     background-color: transparent;
@@ -214,11 +227,15 @@ main {
   }
 }
 .list__button__icon {
-  fill: #888;
-  height: 16px;
-  width: 16px;
+  fill: $dmMinor;
+  height: 28px;
+  width: 28px;
 
   button:hover > & {
     fill: #333;
   }
+}
+
+.watch-on-dm-btn .list__button__icon {
+  fill: $dmBlue;
 }
