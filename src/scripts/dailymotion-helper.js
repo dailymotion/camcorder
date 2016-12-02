@@ -99,7 +99,8 @@ class dmAPI {
 
   getUploadURL() {
     return this.api({
-      path: '/file/upload'
+      path: '/file/upload',
+      params: { ssl_assets: 1 },
     })
   }
 
