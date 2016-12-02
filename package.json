@@ -1,6 +1,6 @@
 {
-  "name": "dailymotion-web-camera",
-  "version": "0.0.1",
+  "name": "dailymotion-camcorder",
+  "version": "1.0.0",
   "description": "Dailymotion Camera is a mobile application to record video & upload it to dailymotion directly from the browser, by using the getUserMedia and MediaRecorder APIs",
   "author": "Olivier Audard <olivier.audard@dailymotion.com>",
   "scripts": {

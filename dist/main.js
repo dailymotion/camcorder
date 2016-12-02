@@ -50,7 +50,7 @@
 
 	var _app = __webpack_require__(5);
 
-	var _runtime = __webpack_require__(12);
+	var _runtime = __webpack_require__(14);
 
 	var _runtime2 = _interopRequireDefault(_runtime);
 
@@ -147,16 +147,13 @@
 	    this.view.bindToggleRecording(this.toggleRecording.bind(this));
 
 	    // List View
-	    this.view.bindListViewBack(this.listViewBack.bind(this));
+	    this.view.bindListViewBack(this.showRecordView.bind(this));
 	    this.view.bindItemActions({
 	      watchItem: this.watchItem.bind(this),
 	      removeItem: this.removeItem.bind(this),
 	      downloadItem: this.downloadItem.bind(this),
 	      uploadItem: this.uploadItem.bind(this)
 	    });
-
-	    _dailymotionHelper2.default.init().then(_dailymotionHelper2.default.getLoginStatus.bind(_dailymotionHelper2.default)).then(this.view.updateSession.bind(this.view)).catch(this.view.updateSession.bind(this.view));
-
 	    this.view.bindLoginActions({
 	      login: this.login.bind(this),
 	      logout: this.logout.bind(this)
@@ -165,55 +162,131 @@
 	    // Watch View
 	    this.view.bindWatchViewBack(this.watchViewBack.bind(this));
 
-	    this.getUserMedia().then(this.createMediaRecorder.bind(this));
+	    // Initialize Dailymotion SDK
+	    _dailymotionHelper2.default.init().then(_dailymotionHelper2.default.getLoginStatus.bind(_dailymotionHelper2.default)).then(this.view.updateSession.bind(this.view)).catch(this.view.updateSession.bind(this.view));
+
+	    this.showRecordView();
 	  }
 
+	  // Display Record View and get the video stream from the camera
+
+
 	  _createClass(Controller, [{
+	    key: 'showRecordView',
+	    value: function showRecordView() {
+	      this.view.showRecordView();
+
+	      this.getUserMedia() // Get the stream from the device camera
+	      .then(this.createMediaRecorder.bind(this)) // Use it to create a MediaRecorder
+	      .catch(this.handleError.bind(this)); // Handle
+	    }
+
+	    // Select an appropriate recording device
+
+	  }, {
+	    key: 'getMediaDevice',
+	    value: function getMediaDevice() {
+	      return navigator.mediaDevices.enumerateDevices()
+	      // We're only interested in video inputs
+	      .then(function (devices) {
+	        return devices.filter(function (d) {
+	          return d.kind === 'videoinput';
+	        });
+	      })
+	      // Get the last device as it seems to match the back camera on most devices
+	      .then(function (devices) {
+	        if (!devices.length) {
+	          throw new Error("Your device doesn't have any camera.");
+	        }
+	        return devices[devices.length - 1];
+	      });
+	    }
+
+	    // Get the video stream from the device's camera
+
+	  }, {
 	    key: 'getUserMedia',
 	    value: function getUserMedia() {
 	      var _this = this;
 
 	      console.log('getting userMedia stream');
-	      return navigator.mediaDevices.enumerateDevices().then(function (devices) {
-	        return devices.filter(function (d) {
-	          return d.kind === 'videoinput';
-	        });
-	      }).then(function (devices) {
+	      return this.getMediaDevice().then(function (device) {
 	        return navigator.mediaDevices.getUserMedia({
 	          audio: true,
 	          video: {
 	            // width: 1280,
 	            // height: 1024,
-	            optional: [{ sourceId: devices[devices.length - 1].deviceId }]
+	            optional: [{ sourceId: device.deviceId }]
 	          }
-	        }).then(function (mediaStream) {
-	          console.log('got userMedia stream');
-	          _this.mediaStream = mediaStream;
-	          _this.view.setMediaStream(_this.mediaStream);
-	          return _this.mediaStream;
 	        });
+	      }).then(function (mediaStream) {
+	        console.log('got userMedia stream');
+	        _this.mediaStream = mediaStream;
+	        _this.view.setMediaStream(_this.mediaStream);
+	        return _this.mediaStream;
 	      });
 	    }
+
+	    // Release the video stream
+
+	  }, {
+	    key: 'releaseUserMedia',
+	    value: function releaseUserMedia() {
+	      if (this.mediaStream) {
+	        console.log('releasing userMedia stream');
+	        this.mediaStream.getTracks().forEach(function (t) {
+	          return t.stop();
+	        });
+	        this.mediaStream = null;
+	      }
+	    }
+
+	    // Create a new mediaRecorder instance and collect the recorded media
+
 	  }, {
 	    key: 'createMediaRecorder',
 	    value: function createMediaRecorder(mediaStream) {
 	      var _this2 = this;
 
-	      var options = function getMediaRecorderOptions() {
-	        if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
-	          return { mimeType: 'video/webm; codecs=vp9' };
-	        } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
-	          return { mimeType: 'video/webm; codecs=vp8' };
-	        } else {
-	          return {};
-	        }
-	      }();
+	      var options = {};
+	      if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+	        options = {
+	          mimeType: 'video/webm; codecs=vp9'
+	        };
+	      } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
+	        options = {
+	          mimeType: 'video/webm; codecs=vp8'
+	        };
+	      }
 
 	      this.mediaRecorder = new MediaRecorder(mediaStream, options);
 	      this.mediaRecorder.ondataavailable = function (e) {
 	        if (e.data.size > 0) {
 	          _this2.recordedChunks.push(e.data);
 	        }
+	      };
+	    }
+
+	    // Starts the a new recording
+
+	  }, {
+	    key: 'startRecording',
+	    value: function startRecording() {
+	      console.log('Recording starts...');
+	      this.recordedChunks = [];
+	      this.mediaRecorder.start();
+	    }
+
+	    // Stop the current recording and return a record item
+
+	  }, {
+	    key: 'stopRecording',
+	    value: function stopRecording() {
+	      console.log('Recording stopped', this.recordedChunks.length);
+	      this.mediaRecorder.stop();
+	      return {
+	        id: Date.now(),
+	        blob: new Blob(this.recordedChunks, { type: 'video/webm' })
 	      };
 	    }
 	  }, {
@@ -223,29 +296,24 @@
 
 	      switch (this.mediaRecorder.state) {
 	        case 'inactive':
-	          console.log('Recording starts...');
-	          this.recordedChunks = [];
-	          this.mediaRecorder.start();
-
-	          this.view.setRecordingStarted();
-	          break;
-
+	          {
+	            this.startRecording();
+	            this.view.setRecordingStarted();
+	            break;
+	          }
 	        case 'recording':
-	          console.log('Recording stopped', this.recordedChunks.length);
-	          this.mediaRecorder.stop();
+	          {
+	            var recordedItem = this.stopRecording();
 
-	          this.store.addRecording({
-	            id: Date.now(),
-	            blob: new Blob(this.recordedChunks, {
-	              type: 'video/webm'
-	            })
-	          }).then(function (recordings) {
-	            console.log('Recording saved:', recordings);
-	            _this3.showItemList();
-	          }).catch(this.handleError.bind(this));
+	            // Add recording to the local store and display the item list once done
+	            this.store.addRecording(recordedItem).then(function (recordings) {
+	              console.log('Recording saved:', recordings);
+	              _this3.showItemList();
+	            }).catch(this.handleError.bind(this));
 
-	          this.view.setRecordingStopped();
-	          break;
+	            this.view.setRecordingStopped();
+	            break;
+	          }
 	        // case 'paused':
 	        //   break;
 	      }
@@ -257,24 +325,12 @@
 
 	      this.view.unsetMediaStream();
 
-	      // stop recording
-	      if (this.mediaStream) {
-	        console.log('releasing userMedia stream');
-	        this.mediaStream.getTracks().forEach(function (t) {
-	          return t.stop();
-	        });
-	        this.mediaStream = null;
-	      }
+	      // UserMedia is not required anymore, release it
+	      this.releaseUserMedia();
 
 	      this.store.getRecordings().then(function (recordings) {
 	        _this4.view.showItemList(recordings);
 	      }).catch(this.handleError.bind(this));
-	    }
-	  }, {
-	    key: 'listViewBack',
-	    value: function listViewBack() {
-	      this.view.listViewBack();
-	      this.getUserMedia().then(this.createMediaRecorder.bind(this)).catch(this.handleError.bind(this));
 	    }
 	  }, {
 	    key: 'removeItem',
@@ -339,6 +395,7 @@
 	    key: 'handleError',
 	    value: function handleError(err) {
 	      console.error('Something went wrong:', err);
+	      alert('Sorry\n' + (err.message ? err.message : 'Something went wrong'));
 	    }
 	  }]);
 
@@ -469,7 +526,8 @@
 	    key: 'getUploadURL',
 	    value: function getUploadURL() {
 	      return this.api({
-	        path: '/file/upload'
+	        path: '/file/upload',
+	        params: { ssl_assets: 1 }
 	      });
 	    }
 	  }, {
@@ -571,7 +629,12 @@
 	  _createClass(Template, [{
 	    key: 'dailymotionLink',
 	    value: function dailymotionLink(videoId) {
-	      return '<a class="watch-on-dm-btn" href="https://www.dailymotion.com/video/' + videoId + '" target="_blank">\uD83D\uDD17</a>';
+	      return '<a class="watch-on-dm-btn" href="https://www.dailymotion.com/video/' + videoId + '" target="_blank">\n      <svg class="list__button__icon">\n        <use xlink:href="images/icons.svg#dmp_ico-logo"></use>\n      </svg>\n    </a>';
+	    }
+	  }, {
+	    key: 'uploadButton',
+	    value: function uploadButton() {
+	      return '<button class="dailymotion-btn" title="Upload to Dailymotion">\n        <svg class="list__button__icon"><use xlink:href="images/icons.svg#dmp_ico-upload"></use></svg>\n        <span class="visuallyhidden">Upload</span>\n      </button>';
 	    }
 	  }, {
 	    key: 'itemList',
@@ -579,7 +642,7 @@
 	      var _this = this;
 
 	      return items.reduce(function (a, item) {
-	        return a + ('\n<li data-id="' + item.id + '">\n  <label>Recording - ' + new Date(item.id).toLocaleString() + '</label>\n  <button class="remove-btn">\uD83D\uDDD1</button>\n  <button class="download-btn">\u2B07</button>\n  ' + (item.dailymotion_id ? _this.dailymotionLink(item.dailymotion_id) : '<button class="dailymotion-btn">⬆</button>') + '\n</li>');
+	        return a + ('\n<li class="list-view__list__item" data-id="' + item.id + '">\n  <label>Recording - ' + new Date(item.id).toLocaleString() + '</label>\n  <button class="remove-btn" title="Delete">\n    <svg class="list__button__icon">\n      <use xlink:href="images/icons.svg#dmp_ico-trash"></use>\n    </svg>\n    <span class="visuallyhidden">Delete</span>\n  </button>\n  <button class="download-btn" title="Download">\n    <svg class="list__button__icon">\n      <use xlink:href="images/icons.svg#dmp_ico-download"></use>\n    </svg>\n    <span class="visuallyhidden">Download</span>\n  </button>\n  ' + (item.dailymotion_id ? _this.dailymotionLink(item.dailymotion_id) : _this.uploadButton()) + '\n</li>');
 	      }, '');
 	    }
 	  }]);
@@ -646,7 +709,7 @@
 	        if (recordings === null) {
 	          recordings = [];
 	        }
-	        recordings.push({ id: id, blob: blob, dailymotion_id: dailymotion_id });
+	        recordings.unshift({ id: id, blob: blob, dailymotion_id: dailymotion_id });
 	        return _localforage2.default.setItem('recordings', recordings);
 	      });
 	    }
@@ -2993,7 +3056,7 @@
 
 /***/ },
 /* 11 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -3002,6 +3065,12 @@
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _delegate = __webpack_require__(12);
+
+	var _delegate2 = _interopRequireDefault(_delegate);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -3025,6 +3094,7 @@
 	    this.listViewBackBtn = document.getElementById('listViewBackBtn');
 	    this.loginBtn = document.getElementById('loginBtn');
 	    this.logoutBtn = document.getElementById('logoutBtn');
+	    this.listViewList = this.listView.querySelector('ul');
 
 	    // Watch View
 	    this.watchViewBackBtn = document.getElementById('watchViewBackBtn');
@@ -3037,11 +3107,11 @@
 	      this.recordView.classList.toggle('hidden', true);
 	      this.listView.classList.toggle('hidden', false);
 	      this.watchView.classList.toggle('hidden', true);
-	      this.listView.querySelector('ul').innerHTML = this.template.itemList(items);
+	      this.listViewList.innerHTML = this.template.itemList(items);
 	    }
 	  }, {
-	    key: 'listViewBack',
-	    value: function listViewBack() {
+	    key: 'showRecordView',
+	    value: function showRecordView() {
 	      this.recordView.classList.toggle('hidden', false);
 	      this.listView.classList.toggle('hidden', true);
 	      this.watchView.classList.toggle('hidden', true);
@@ -3162,44 +3232,35 @@
 	    value: function bindItemActions(handlers) {
 	      var _this3 = this;
 
-	      this.listView.addEventListener('click', function (e) {
-	        var watchItem = handlers.watchItem,
-	            removeItem = handlers.removeItem,
-	            downloadItem = handlers.downloadItem,
-	            uploadItem = handlers.uploadItem;
+	      var watchItem = handlers.watchItem,
+	          removeItem = handlers.removeItem,
+	          downloadItem = handlers.downloadItem,
+	          uploadItem = handlers.uploadItem;
 
-	        var targetElement = e.target;
-	        var itemId = parseInt(targetElement.dataset.id || targetElement.parentElement.dataset.id, 10);
+	      var getItemIdFromDelegateTarget = function getItemIdFromDelegateTarget(target) {
+	        return parseInt(target.parentElement.dataset.id, 10);
+	      };
 
-	        if (targetElement.nodeName === 'LI' || targetElement.nodeName === 'LABEL') {
-	          // Catch user action right away, so watchItem will be free to call play() on the video element asynchronously
-	          _this3._catchUserAction(_this3.videoWatchElem);
-	          watchItem(itemId);
-	          return;
-	        }
-
-	        if (targetElement.classList.contains('remove-btn')) {
-	          removeItem(itemId);
-	        } else if (targetElement.classList.contains('download-btn')) {
-	          downloadItem(itemId);
-	        } else if (targetElement.classList.contains('dailymotion-btn')) {
-	          uploadItem(itemId);
-	        }
+	      (0, _delegate2.default)(this.listViewList, '.remove-btn', 'click', function (e) {
+	        var itemId = getItemIdFromDelegateTarget(e.delegateTarget);
+	        removeItem(itemId);
 	      });
-	    }
-	  }, {
-	    key: 'bindWatchItem',
-	    value: function bindWatchItem(handler) {
-	      var _this4 = this;
 
-	      this.listView.addEventListener('click', function (e) {
-	        var targetElement = e.target;
-	        if (targetElement.nodeName === 'LI' || targetElement.nodeName === 'LABEL') {
-	          var itemId = targetElement.dataset.id || targetElement.parentElement.dataset.id;
-	          //
-	          _this4._catchUserAction(_this4.videoWatchElem);
-	          handler(parseInt(itemId, 10));
-	        }
+	      (0, _delegate2.default)(this.listViewList, '.download-btn', 'click', function (e) {
+	        var itemId = getItemIdFromDelegateTarget(e.delegateTarget);
+	        downloadItem(itemId);
+	      });
+
+	      (0, _delegate2.default)(this.listViewList, '.dailymotion-btn', 'click', function (e) {
+	        var itemId = getItemIdFromDelegateTarget(e.delegateTarget);
+	        uploadItem(itemId);
+	      });
+
+	      (0, _delegate2.default)(this.listViewList, 'label', 'click', function (e) {
+	        var itemId = getItemIdFromDelegateTarget(e.delegateTarget);
+	        // Catch user action right away, so watchItem will be free to call play() on the video element asynchronously
+	        _this3._catchUserAction(_this3.videoWatchElem);
+	        watchItem(itemId);
 	      });
 	    }
 	  }, {
@@ -3231,6 +3292,90 @@
 
 /***/ },
 /* 12 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var closest = __webpack_require__(13);
+
+	/**
+	 * Delegates event to a selector.
+	 *
+	 * @param {Element} element
+	 * @param {String} selector
+	 * @param {String} type
+	 * @param {Function} callback
+	 * @param {Boolean} useCapture
+	 * @return {Object}
+	 */
+	function delegate(element, selector, type, callback, useCapture) {
+	    var listenerFn = listener.apply(this, arguments);
+
+	    element.addEventListener(type, listenerFn, useCapture);
+
+	    return {
+	        destroy: function() {
+	            element.removeEventListener(type, listenerFn, useCapture);
+	        }
+	    }
+	}
+
+	/**
+	 * Finds closest match and invokes callback.
+	 *
+	 * @param {Element} element
+	 * @param {String} selector
+	 * @param {String} type
+	 * @param {Function} callback
+	 * @return {Function}
+	 */
+	function listener(element, selector, type, callback) {
+	    return function(e) {
+	        e.delegateTarget = closest(e.target, selector);
+
+	        if (e.delegateTarget) {
+	            callback.call(element, e);
+	        }
+	    }
+	}
+
+	module.exports = delegate;
+
+
+/***/ },
+/* 13 */
+/***/ function(module, exports) {
+
+	/**
+	 * A polyfill for Element.matches()
+	 */
+	if (Element && !Element.prototype.matches) {
+	    var proto = Element.prototype;
+
+	    proto.matches = proto.matchesSelector ||
+	                    proto.mozMatchesSelector ||
+	                    proto.msMatchesSelector ||
+	                    proto.oMatchesSelector ||
+	                    proto.webkitMatchesSelector;
+	}
+
+	/**
+	 * Finds the closest parent that matches a selector.
+	 *
+	 * @param {Element} element
+	 * @param {String} selector
+	 * @return {Function}
+	 */
+	function closest (element, selector) {
+	    while (element && element !== document) {
+	        if (element.matches(selector)) return element;
+	        element = element.parentNode;
+	    }
+	}
+
+	module.exports = closest;
+
+
+/***/ },
+/* 14 */
 /***/ function(module, exports) {
 
 	var appCacheIframe;
