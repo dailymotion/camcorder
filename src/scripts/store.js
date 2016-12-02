@@ -26,7 +26,7 @@ export default class Store {
         if (recordings === null) {
           recordings = []
         }
-        recordings.push({id, blob, dailymotion_id})
+        recordings.unshift({id, blob, dailymotion_id})
         return localforage.setItem('recordings', recordings)
       })
   }
