@@ -14,19 +14,13 @@ export default class Controller {
     this.view.bindToggleRecording(this.toggleRecording.bind(this))
 
     // List View
-    this.view.bindListViewBack(this.listViewBack.bind(this))
+    this.view.bindListViewBack(this.showRecordView.bind(this))
     this.view.bindItemActions({
       watchItem    : this.watchItem.bind(this),
       removeItem   : this.removeItem.bind(this),
       downloadItem : this.downloadItem.bind(this),
       uploadItem   : this.uploadItem.bind(this),
     })
-
-    DM.init()
-      .then(DM.getLoginStatus.bind(DM))
-      .then(this.view.updateSession.bind(this.view))
-      .catch(this.view.updateSession.bind(this.view))
-
     this.view.bindLoginActions({
       login  : this.login.bind(this),
       logout : this.logout.bind(this),
@@ -35,42 +29,81 @@ export default class Controller {
     // Watch View
     this.view.bindWatchViewBack(this.watchViewBack.bind(this))
 
-    this.getUserMedia()
-      .then(this.createMediaRecorder.bind(this))
+    // Initialize Dailymotion SDK
+    DM.init()
+      .then(DM.getLoginStatus.bind(DM))
+      .then(this.view.updateSession.bind(this.view))
+      .catch(this.view.updateSession.bind(this.view))
+
+    this.showRecordView()
   }
 
+  // Display Record View and get the video stream from the camera
+  showRecordView() {
+    this.view.showRecordView()
+
+    this.getUserMedia()                           // Get the stream from the device camera
+      .then(this.createMediaRecorder.bind(this))  // Use it to create a MediaRecorder
+      .catch(this.handleError.bind(this))         // Handle
+  }
+
+  // Select an appropriate recording device
+  getMediaDevice() {
+    return navigator.mediaDevices.enumerateDevices()
+      // We're only interested in video inputs
+      .then(devices => devices.filter(d => d.kind === 'videoinput'))
+      // Get the last device as it seems to match the back camera on most devices
+      .then(devices => {
+        if (!devices.length) {
+          throw new Error("Your device doesn't have any camera.")
+        }
+        return devices[devices.length - 1]
+      })
+  }
+
+  // Get the video stream from the device's camera
   getUserMedia() {
     console.log('getting userMedia stream')
-    return navigator.mediaDevices.enumerateDevices()
-      .then(devices => devices.filter(d => d.kind === 'videoinput'))
-      .then(devices => {
+    return this.getMediaDevice()
+      .then(device => {
         return navigator.mediaDevices.getUserMedia({
           audio : true,
           video : {
             // width: 1280,
             // height: 1024,
-            optional: [{ sourceId: devices[devices.length - 1].deviceId }],
+            optional: [{ sourceId: device.deviceId }],
           },
         })
-        .then((mediaStream) => {
-          console.log('got userMedia stream')
-          this.mediaStream = mediaStream
-          this.view.setMediaStream(this.mediaStream)
-          return this.mediaStream
-        })
+      })
+      .then((mediaStream) => {
+        console.log('got userMedia stream')
+        this.mediaStream = mediaStream
+        this.view.setMediaStream(this.mediaStream)
+        return this.mediaStream
       })
   }
 
+  // Release the video stream
+  releaseUserMedia() {
+    if (this.mediaStream) {
+      console.log('releasing userMedia stream')
+      this.mediaStream.getTracks().forEach((t) => t.stop())
+      this.mediaStream = null
+    }
+  }
+
+  // Create a new mediaRecorder instance and collect the recorded media
   createMediaRecorder(mediaStream) {
-    const options = (function getMediaRecorderOptions() {
-      if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
-        return {mimeType: 'video/webm; codecs=vp9'}
-      } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
-         return {mimeType: 'video/webm; codecs=vp8'}
-      } else {
-        return {}
+    let options = {}
+    if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+      options = {
+        mimeType: 'video/webm; codecs=vp9'
       }
-    })()
+    } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
+       options = {
+        mimeType: 'video/webm; codecs=vp8'
+      }
+    }
 
     this.mediaRecorder = new MediaRecorder(mediaStream, options)
     this.mediaRecorder.ondataavailable = (e) => {
@@ -80,34 +113,44 @@ export default class Controller {
     }
   }
 
+  // Starts the a new recording
+  startRecording() {
+    console.log('Recording starts...')
+    this.recordedChunks = []
+    this.mediaRecorder.start()
+  }
+
+  // Stop the current recording and return a record item
+  stopRecording() {
+    console.log('Recording stopped', this.recordedChunks.length)
+    this.mediaRecorder.stop()
+    return {
+      id   : Date.now(),
+      blob : new Blob(this.recordedChunks, { type: 'video/webm' }),
+    }
+  }
+
   toggleRecording() {
     switch(this.mediaRecorder.state) {
-      case 'inactive':
-        console.log('Recording starts...')
-        this.recordedChunks = []
-        this.mediaRecorder.start()
-
+      case 'inactive': {
+        this.startRecording()
         this.view.setRecordingStarted()
         break
+      }
+      case 'recording': {
+        const recordedItem = this.stopRecording()
 
-      case 'recording':
-        console.log('Recording stopped', this.recordedChunks.length)
-        this.mediaRecorder.stop()
-
-        this.store.addRecording({
-          id   : Date.now(),
-          blob : new Blob(this.recordedChunks, {
-            type: 'video/webm'
-          }),
-        })
-        .then((recordings) => {
-          console.log('Recording saved:', recordings)
-          this.showItemList()
-        })
-        .catch(this.handleError.bind(this))
+        // Add recording to the local store and display the item list once done
+        this.store.addRecording(recordedItem)
+          .then((recordings) => {
+            console.log('Recording saved:', recordings)
+            this.showItemList()
+          })
+          .catch(this.handleError.bind(this))
 
         this.view.setRecordingStopped()
         break
+      }
       // case 'paused':
       //   break;
     }
@@ -116,24 +159,13 @@ export default class Controller {
   showItemList() {
     this.view.unsetMediaStream()
 
-    // stop recording
-    if (this.mediaStream) {
-      console.log('releasing userMedia stream')
-      this.mediaStream.getTracks().forEach((t) => t.stop())
-      this.mediaStream = null
-    }
+    // UserMedia is not required anymore, release it
+    this.releaseUserMedia()
 
     this.store.getRecordings()
       .then((recordings) => {
         this.view.showItemList(recordings)
       })
-      .catch(this.handleError.bind(this))
-  }
-
-  listViewBack() {
-    this.view.listViewBack()
-    this.getUserMedia()
-      .then(this.createMediaRecorder.bind(this))
       .catch(this.handleError.bind(this))
   }
 
@@ -197,5 +229,6 @@ export default class Controller {
 
   handleError(err) {
     console.error('Something went wrong:', err)
+    alert(`Sorry\n${err.message ? err.message : 'Something went wrong'}`)
   }
 }

@@ -32,7 +32,7 @@ export default class View {
     this.listViewList.innerHTML = this.template.itemList(items)
   }
 
-  listViewBack() {
+  showRecordView() {
     this.recordView.classList.toggle('hidden', false)
     this.listView.classList.toggle('hidden', true)
     this.watchView.classList.toggle('hidden', true)
