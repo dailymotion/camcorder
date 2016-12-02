@@ -12,12 +12,12 @@ var __wpo = {
     ]
   },
   "hashesMap": {
-    "c3dc6e7b0763c1cb72d685dab65ecf32": "./main.js",
-    "3f374f62ad76bf2c8eba52990f6004bb": "./main.css",
-    "7af00e2cc7d4a0dae68ab01731285bf4": "./"
+    "a53d8975d755a472fbe2be9bb501dfb0": "./main.js",
+    "1475f2cdf1bf6b833dbe021af99e690f": "./main.css",
+    "8656eb61d0a175fb1b3b03de4be468fb": "./"
   },
   "strategy": "all",
-  "version": "2016-11-16 15:46:01",
+  "version": "2016-12-02 15:26:58",
   "name": "webpack-offline",
   "relativePaths": true
 };

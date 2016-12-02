@@ -1,6 +1,6 @@
 {
-  "name": "Dailymotion Camera",
-  "short_name": "Camera",
+  "name": "Dailymotion Camcorder",
+  "short_name": "Camcorder",
   "icons": [],
   "start_url": "/",
   "display": "standalone",
