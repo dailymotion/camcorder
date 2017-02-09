@@ -2,7 +2,9 @@
 
 A simple Web Application to record, watch and upload videos to dailymotion.
 
-The goal is to showcase [`getUserMedia()`][2] & [`MediaRecorder`][3] APIs, and how they can be used to record and upload a video to Dailymotion, directly from the browser.
+![Screen Captures](https://raw.githubusercontent.com/dailymotion/camcorder/master/captures/camcorder-captures.png)
+
+The goal is to showcase [`getUserMedia()`][2] & [`MediaRecorder`][3] APIs, as well as [Dailymotion JavaScript SDK][9], and how they can be used to record and upload a video to Dailymotion, directly from the browser.
 
 [Give it a try][1]
 
@@ -57,3 +59,4 @@ Build the application for production and deploys it to github pages.
 [6]: https://github.com/NekR/offline-plugin "offline-plugin"
 [7]: https://www.dailymotion.com/settings/developer "Dailymotion - Manage your API Keys"
 [8]: https://webpack.github.io/docs/webpack-dev-server.html "webpack dev server"
+[9]: https://developer.dailymotion.com/tools/sdks#sdk-javascript "Dailymotion JavaScript SDK"
